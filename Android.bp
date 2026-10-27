@@ -1,0 +1,55 @@
+// AOSP / AAOS image integration. Place this repo under e.g. vendor/<oem>/apps/IssueDaemon
+// and add to your product makefile:
+//     PRODUCT_PACKAGES += IssueDaemon
+//
+// The Gradle build (./gradlew assembleDebug) is for development; this is how it ships.
+
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+// Derives the image manifest from the Gradle one:
+//  - adds the package attribute (AGP uses `namespace`; Soong needs it in the manifest)
+//  - runs the daemon as android.uid.system. Required for a headless log monitor: since Android 13
+//    logd asks the user to approve log access for every uid >= 10000, privileged or not
+//    (system/logging/logd/LogPermissions.cpp clientIsExemptedFromUserConsent). The system uid also
+//    gives the system_app SELinux domain, which can reach meminfo/cpuinfo for dumpsys.
+genrule {
+    name: "IssueDaemonManifest",
+    srcs: ["app/src/main/AndroidManifest.xml"],
+    out: ["AndroidManifest.xml"],
+    cmd: "sed 's|<manifest |<manifest package=\"com.aaos.issuedaemon\" android:sharedUserId=\"android.uid.system\" |' $(in) > $(out)",
+}
+
+android_app {
+    name: "IssueDaemon",
+    srcs: ["app/src/main/java/**/*.kt"],
+    manifest: ":IssueDaemonManifest",
+    resource_dirs: ["app/src/main/res"],
+    asset_dirs: ["app/src/main/assets"],
+    libs: ["android.car"],
+    platform_apis: true,
+    certificate: "platform",
+    privileged: true,
+    system_ext_specific: true,
+    required: [
+        "privapp_allowlist_com.aaos.issuedaemon.xml",
+        "issue_daemon_config.json",
+    ],
+}
+
+prebuilt_etc {
+    name: "privapp_allowlist_com.aaos.issuedaemon.xml",
+    src: "aosp/privapp_allowlist_com.aaos.issuedaemon.xml",
+    sub_dir: "permissions",
+    system_ext_specific: true,
+}
+
+// OEM/fleet configuration -> /product/etc/issue-daemon/config.json (server url, thresholds, rules).
+prebuilt_etc {
+    name: "issue_daemon_config.json",
+    src: "aosp/config.json",
+    filename: "config.json",
+    sub_dir: "issue-daemon",
+    product_specific: true,
+}

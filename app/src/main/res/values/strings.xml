@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Issue Daemon</string>
+    <string name="notification_channel">Health monitoring</string>
+    <string name="notification_text">Monitoring device health</string>
+</resources>

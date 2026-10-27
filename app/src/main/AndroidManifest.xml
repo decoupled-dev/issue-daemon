@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Issue Daemon: runs as a persistent, platform-signed priv-app in the system user (user 0).
+  NOTE: no package attribute here (Gradle supplies the namespace); the AOSP build injects it
+  via the genrule in Android.bp.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="ProtectedPermissions">
+
+    <!-- Networking to the ECU server -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Lifecycle -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Diagnostics (privileged / signature) -->
+    <uses-permission android:name="android.permission.READ_LOGS" />
+    <uses-permission android:name="android.permission.DUMP" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+    <uses-permission android:name="android.permission.PEEK_DROPBOX_DATA" />
+
+    <!-- Vehicle identity (VIN) -->
+    <uses-permission android:name="android.car.permission.CAR_IDENTIFICATION" />
+
+    <application
+        android:name=".IssueDaemonApp"
+        android:label="@string/app_name"
+        android:persistent="true"
+        android:directBootAware="true"
+        android:allowBackup="false"
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config">
+
+        <uses-library android:name="android.car" android:required="false" />
+
+        <service
+            android:name=".DaemonService"
+            android:exported="false"
+            android:directBootAware="true"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="vehicle_health_monitoring" />
+        </service>
+
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true"
+            android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Runtime control (config, test issue, flush, status). Only shell/system hold DUMP. -->
+        <receiver
+            android:name=".ControlReceiver"
+            android:exported="true"
+            android:directBootAware="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="com.aaos.issuedaemon.action.SET_SERVER_URL" />
+                <action android:name="com.aaos.issuedaemon.action.SET_CONFIG" />
+                <action android:name="com.aaos.issuedaemon.action.RESET_CONFIG" />
+                <action android:name="com.aaos.issuedaemon.action.TEST_ISSUE" />
+                <action android:name="com.aaos.issuedaemon.action.FLUSH" />
+                <action android:name="com.aaos.issuedaemon.action.STATUS" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

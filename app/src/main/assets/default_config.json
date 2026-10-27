@@ -1,0 +1,74 @@
+{
+  "server": {
+    "url": "",
+    "api_key": "",
+    "device_id": "",
+    "connect_timeout_ms": 10000,
+    "read_timeout_ms": 30000,
+    "heartbeat_interval_sec": 300,
+    "retry_min_sec": 30,
+    "retry_max_sec": 1800
+  },
+  "monitors": {
+    "cpu": { "enabled": true, "interval_sec": 10, "threshold_percent": 85, "sustained_samples": 3 },
+    "memory": { "enabled": true, "interval_sec": 15, "available_min_percent": 10, "sustained_samples": 2 },
+    "storage": { "enabled": true, "interval_sec": 300, "path": "/data", "free_min_percent": 10 },
+    "thermal": { "enabled": true, "min_status": 3 },
+    "car_service": { "enabled": true },
+    "boot": {
+      "enabled": true,
+      "abnormal_pattern": "(?i)(panic|watchdog|wdog|oops|hw_reset|ocp|uvlo|abnormal|sysrq|crash)"
+    },
+    "dropbox": {
+      "enabled": true,
+      "max_entry_bytes": 2097152,
+      "tags": [
+        "data_app_crash", "system_app_crash", "system_server_crash",
+        "data_app_anr", "system_app_anr", "system_server_anr",
+        "data_app_native_crash", "system_app_native_crash", "system_server_native_crash",
+        "SYSTEM_TOMBSTONE", "SYSTEM_TOMBSTONE_PROTO", "SYSTEM_TOMBSTONE_PROTO_WITH_HEADERS",
+        "system_server_watchdog", "SYSTEM_RESTART"
+      ]
+    },
+    "logcat": {
+      "enabled": true,
+      "buffers": ["main", "system", "crash", "events"],
+      "context_lines_before": 30,
+      "context_lines_after": 60,
+      "context_window_ms": 3000,
+      "rules": [
+        { "id": "fatal_exception", "pattern": "FATAL EXCEPTION: ", "type": "APP_CRASH", "severity": "ERROR", "process_regex": "Process: ([^,\\s]+)" },
+        { "id": "system_server_crash", "pattern": "FATAL EXCEPTION IN SYSTEM PROCESS", "type": "SYSTEM_SERVER_CRASH", "severity": "CRITICAL" },
+        { "id": "native_crash", "pattern": "Fatal signal \\d+", "type": "NATIVE_CRASH", "severity": "ERROR", "process_regex": "pid \\d+ \\(([^)]+)\\)" },
+        { "id": "anr", "pattern": "ANR in ", "type": "ANR", "severity": "ERROR", "process_regex": "ANR in (\\S+)" },
+        { "id": "dead_object", "pattern": "DeadObjectException", "type": "DEAD_OBJECT", "severity": "WARNING" },
+        { "id": "out_of_memory", "pattern": "java\\.lang\\.OutOfMemoryError", "type": "OUT_OF_MEMORY", "severity": "ERROR" },
+        { "id": "lmk_kill", "pattern": "lowmemorykiller: Kill '", "type": "LOW_MEMORY_KILL", "severity": "WARNING", "process_regex": "Kill '([^']+)'" },
+        { "id": "binder_failure", "pattern": "FAILED BINDER TRANSACTION|TransactionTooLargeException", "type": "BINDER_FAILURE", "severity": "WARNING" },
+        { "id": "watchdog", "pattern": "WATCHDOG KILLING SYSTEM PROCESS", "type": "WATCHDOG", "severity": "CRITICAL" },
+        { "id": "vhal_died", "pattern": "android\\.hardware\\.automotive\\.vehicle.*(died|crash)", "type": "LOG_PATTERN", "severity": "CRITICAL" },
+        { "id": "ui_jank", "pattern": "Skipped \\d{3,} frames", "type": "LOG_PATTERN", "severity": "WARNING", "enabled": false },
+        { "id": "selinux_denial", "pattern": "avc:  denied", "type": "LOG_PATTERN", "severity": "INFO", "enabled": false }
+      ]
+    }
+  },
+  "reporting": {
+    "cooldown_sec": 300,
+    "settle_sec": 5,
+    "max_reports_per_hour": 30,
+    "max_queue_mb": 200,
+    "include_logs": true,
+    "logcat_lines": 5000,
+    "command_timeout_sec": 20,
+    "max_output_bytes": 4194304,
+    "dumpsys": ["meminfo", "cpuinfo", "activity processes", "activity lastanr", "thermalservice", "car_service --services CarPowerManagementService"],
+    "commands": [
+      { "name": "top.txt", "argv": ["top", "-b", "-n", "1", "-m", "30"] },
+      { "name": "ps.txt", "argv": ["ps", "-A", "-o", "PID,PPID,USER,RSS,VSZ,S,NAME"] },
+      { "name": "getprop.txt", "argv": ["getprop"] },
+      { "name": "proc_meminfo.txt", "argv": ["cat", "/proc/meminfo"] },
+      { "name": "df.txt", "argv": ["df", "-h"] },
+      { "name": "uptime.txt", "argv": ["uptime"] }
+    ]
+  }
+}

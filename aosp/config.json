@@ -1,0 +1,15 @@
+{
+  "server": {
+    "url": "http://192.168.1.10:8080",
+    "api_key": "",
+    "heartbeat_interval_sec": 300
+  },
+  "monitors": {
+    "cpu": { "threshold_percent": 85, "sustained_samples": 3 },
+    "memory": { "available_min_percent": 10 }
+  },
+  "reporting": {
+    "cooldown_sec": 300,
+    "max_reports_per_hour": 30
+  }
+}

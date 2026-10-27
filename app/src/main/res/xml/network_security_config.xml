@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MVP: cleartext is allowed so the daemon can talk to an in-vehicle ECU server over plain HTTP.
+  For production, set cleartextTrafficPermitted="false" and pin the ECU server's CA below.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
